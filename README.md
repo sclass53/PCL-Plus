@@ -1,6 +1,6 @@
 # PCL Plus
 
-更强，更智能的PCL。
+更强，更智能的PCL (Plain Craft Launcher)。
 
 ## 桌宠
 
