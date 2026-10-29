@@ -9,7 +9,7 @@ Public Class PageLaunchRight
         '快照版提示
         PanHint.Visibility =
             (BuildType <> BuildTypes.Release AndAlso VersionBranchMain = "Official" AndAlso
-             CurrentRank < DonationRank.Rank23 AndAlso Not Settings.Get(Of Boolean)("HintSnapshot")).ToVisibility
+             Not Settings.Get(Of Boolean)("HintSnapshot")).ToVisibility
     End Sub
 
 #Region "主页"

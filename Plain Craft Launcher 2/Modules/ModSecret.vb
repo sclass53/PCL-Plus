@@ -10,15 +10,9 @@ Friend Module ModSecret
     Public OAuthClientId As String = If(Environment.GetEnvironmentVariable("PCL_MS_CLIENT_ID"), "")
     'CurseForge API Key
     Public CurseForgeAPIKey As String = If(Environment.GetEnvironmentVariable("PCL_CURSEFORGE_API_KEY"), "")
-    '用于匿名数据收集的腾讯云日志服务上报 URL，形如 https://{region}.cls.tencentcs.com/track?topic_id={topic_id}
-    Public Const ClsBaseUrl As String = ""
 
 #Region "网络鉴权"
 
-    Friend Function SecretCdnSign(UrlWithMark As String) As String
-        If Not UrlWithMark.EndsWithF("{CDN}") Then Return UrlWithMark
-        Return UrlWithMark.Replace("{CDN}", "").Replace(" ", "%20")
-    End Function
     ''' <summary>
     ''' 设置 Headers 的 UA、Referer。
     ''' </summary>
@@ -32,7 +26,6 @@ Friend Module ModSecret
                 Req.Headers.Add("User-Agent", $"PCL2/{VersionBaseName}.{CInt(BuildType)}")
             End If
         End If
-        If Not SimulateBrowserHeaders Then Req.Headers.Add("Referer", $"http://{VersionCode}.open.pcl2.server/")
         If Url.Contains("api.curseforge.com") OrElse Url.Contains("forgecdn.net") Then Req.Headers.Add("x-api-key", CurseForgeAPIKey)
     End Sub
 
@@ -146,41 +139,6 @@ Friend Module ModSecret
     Friend Sub DownloadLatestPCL(Optional LoaderToSyncProgress As LoaderBase = Nothing)
         '注意：如果要自行实现这个功能，请换用另一个文件路径，以免与官方版本冲突
     End Sub
-
-#End Region
-
-#Region "联网配置"
-
-    ''' <summary>
-    ''' 联网获取的配置信息。
-    ''' 若获取失败或仍在获取中，可能为 Nothing。
-    ''' </summary>
-    Public ServerConfig As JObject
-
-    Public ServerLoader As New LoaderTask(Of Integer, Integer)("PCL 配置更新", Sub() Logger.Info("该版本中不包含更新通知功能……"), Priority:=ThreadPriority.BelowNormal) With
-        {.ReloadTimeout = 1000 * 60 * 60} '超时 1 小时
-
-#End Region
-
-#Region "赞助等级"
-
-    Public ReadOnly Property CurrentRank As DonationRank
-        Get
-            Return DonationRank.None
-        End Get
-    End Property
-
-    Public Sub InputPotatoCode(IsUpdating As Boolean)
-    End Sub
-    Friend Sub GeneratePotatoCode()
-    End Sub
-
-    ''' <summary>
-    ''' 获取设备识别码。
-    ''' </summary>
-    Friend Function GetIdentify() As String
-        Return "0000-0000-0000-0000"
-    End Function
 
 #End Region
 

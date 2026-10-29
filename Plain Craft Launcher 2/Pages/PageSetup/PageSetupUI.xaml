@@ -276,12 +276,10 @@
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Left" Text="主页面" />
                         <local:MyCheckBox Height="22" VerticalAlignment="Center" Grid.Row="1" Grid.Column="2" Text="下载" x:Name="CheckHiddenPageDownload" local:SettingService.Key="UiHiddenPageDownload" />
-                        <local:MyCheckBox Height="22" VerticalAlignment="Center" Grid.Row="1" Grid.Column="3" Text="联机" x:Name="CheckHiddenPageLink" local:SettingService.Key="UiHiddenPageLink" IsEnabled="False" />
                         <local:MyCheckBox Height="22" VerticalAlignment="Center" Grid.Row="1" Grid.Column="4" Text="设置" x:Name="CheckHiddenPageSetup" local:SettingService.Key="UiHiddenPageSetup" />
                         <local:MyCheckBox Height="22" VerticalAlignment="Center" Grid.Row="1" Grid.Column="5" Text="更多" x:Name="CheckHiddenPageOther" local:SettingService.Key="UiHiddenPageOther" />
                         <TextBlock Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Left" Text="设置 子页面" />
                         <local:MyCheckBox Height="22" VerticalAlignment="Center" Grid.Row="2" Grid.Column="2" Text="启动" x:Name="CheckHiddenSetupLaunch" local:SettingService.Key="UiHiddenSetupLaunch" />
-                        <local:MyCheckBox Height="22" VerticalAlignment="Center" Grid.Row="2" Grid.Column="3" Text="联机" x:Name="CheckHiddenSetupLink" local:SettingService.Key="UiHiddenSetupLink" IsEnabled="False" />
                         <local:MyCheckBox Height="22" VerticalAlignment="Center" Grid.Row="2" Grid.Column="4" Text="个性化" x:Name="CheckHiddenSetupUI" local:SettingService.Key="UiHiddenSetupUi" />
                         <local:MyCheckBox Height="22" VerticalAlignment="Center" Grid.Row="2" Grid.Column="5" Text="其他" x:Name="CheckHiddenSetupSystem" local:SettingService.Key="UiHiddenSetupSystem" />
                         <TextBlock Grid.Row="3" VerticalAlignment="Center" HorizontalAlignment="Left" Text="更多 子页面" />

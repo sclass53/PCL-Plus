@@ -7,9 +7,7 @@ Public Class PageSetupSystem
         PanBack.ScrollToHome()
 
         If BuildType = BuildTypes.Release Then
-            PanDonate.Visibility = Visibility.Collapsed
         Else
-            PanDonate.Visibility = Visibility.Visible
         End If
 
         '非重复加载部分
@@ -65,12 +63,6 @@ Public Class PageSetupSystem
     End Sub
 
     '识别码/土豆码替代入口
-    Private Sub BtnSystemIdentify_Click(sender As Object, e As MouseButtonEventArgs) Handles BtnSystemIdentify.Click
-        PageOtherAbout.CopyIdentify()
-    End Sub
-    Private Sub BtnSystemUnlock_Click(sender As Object, e As MouseButtonEventArgs) Handles BtnSystemUnlock.Click
-        InputPotatoCode(False)
-    End Sub
 
     '调试模式
     Private Sub CheckDebugMode_Change() Handles CheckDebugMode.Change

@@ -63,7 +63,7 @@ Public Module ModBase
     ''' <summary>
     ''' 识别码。
     ''' </summary>
-    Public Identify As String = GetIdentify()
+    Public Identify As String = "0000-0000-0000-0000"
     ''' <summary>
     ''' 程序是否正在结束。
     ''' </summary>

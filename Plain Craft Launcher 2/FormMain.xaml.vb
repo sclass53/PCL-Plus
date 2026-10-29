@@ -90,7 +90,7 @@ Public Class FormMain
             End If
             If LastVersion < 379 Then 'Release 2.12.1
                 If LastVersion >= 376 Then
-                    FeatureList.Add(New KeyValuePair(Of Integer, String)(5, "删除：暂时隐藏联机入口……不过只是暂时关闭，它还会回来的！"))
+                    FeatureList.Add(New KeyValuePair(Of Integer, String)(5, "删除：联机功能（该功能依赖 PCL 云端配置，破解版无法使用）"))
                 End If
                 FeatureList.Add(New KeyValuePair(Of Integer, String)(3, "新增：适配新的 Minecraft 版本号系统与 Unobfuscated 版本"))
                 FeatureList.Add(New KeyValuePair(Of Integer, String)(2, "优化：巨幅优化各个下载页面和 Mod 管理页面的性能"))
@@ -234,7 +234,7 @@ Public Class FormMain
             End If
             If LastVersion < 377 Then 'Snapshot 2.12.0
                 If LastVersion >= 373 Then
-                    FeatureList.Add(New KeyValuePair(Of Integer, String)(5, "删除：暂时隐藏联机入口……不过只是暂时关闭，它还会回来的！"))
+                    FeatureList.Add(New KeyValuePair(Of Integer, String)(5, "删除：联机功能（该功能依赖 PCL 云端配置，破解版无法使用）"))
                 End If
                 FeatureList.Add(New KeyValuePair(Of Integer, String)(3, "新增：适配新的 Minecraft 版本号系统与 Unobfuscated 版本"))
                 FeatureList.Add(New KeyValuePair(Of Integer, String)(2, "优化：巨幅优化各个下载页面和 Mod 管理页面的性能"))
@@ -452,13 +452,10 @@ Public Class FormMain
                 Thread.Sleep(100)
                 DlClientListMojangLoader.Start(1) 'PCL 会同时根据这里的加载结果决定是否使用官方源进行下载
                 RunCountSub()
-                ServerLoader.Start()
                 RunInNewThread(AddressOf TryClearTaskTemp, "TryClearTaskTemp", ThreadPriority.BelowNormal)
             Catch ex As Exception
                 Logger.Error(ex, "初始化加载池运行失败")
             End Try
-            '上报
-            Telemetry("启动")
         End Sub, "初始化", ThreadPriority.Lowest)
 
         Logger.Info($"第三阶段加载用时：{GetTimeMs() - ApplicationStartTick} ms")
@@ -561,8 +558,6 @@ Public Class FormMain
                 Next
             End Sub, "强行停止下载任务")
         End If
-        '关闭联机？
-        If FrmLinkMain?.TryExit(Not SendWarning, True) Then Return
         '关闭
         RunInUiWait(
         Sub()
@@ -878,23 +873,6 @@ Public Class FormMain
         Catch ex As Exception
             Logger.Error(ex, "切回窗口时出错")
         End Try
-        '读取剪贴板，自动加入联机房间
-        Return 'TODO: 联机复活赛
-        If PageLinkMain.LinkState <> PageLinkMain.LinkStates.Waiting Then Return '已启动联机
-        If PageCurrent = PageType.Link Then Return '已在联机界面
-        Dim Code = ClipboardGetText() : If Code Is Nothing Then Return '剪贴板无文本
-        If Settings.Get(Of String)("LinkLastAutoJoinInviteCode") = Code Then Return
-        If PageLinkMain.ValidateCodeFormat(Code) IsNot Nothing Then Return '不是邀请码
-        Settings.Set("LinkLastAutoJoinInviteCode", Code)
-        RunInThread(
-        Sub()
-            If MyMsgBox("嘿，是否使用复制的邀请码加入房间？", "加入联机房间", "加入", "取消") = 2 Then Return '防止弹窗阻碍主线程，所以必须放在工作线程
-            RunInUi(
-            Sub()
-                PageLinkMain.Join(Code)
-                ClipboardSet(Nothing, False)
-            End Sub)
-        End Sub)
     End Sub
 
     '文件拖放
@@ -1171,10 +1149,6 @@ Public Class FormMain
         ''' </summary>
         Download = 1
         ''' <summary>
-        ''' 联机。
-        ''' </summary>
-        Link = 2
-        ''' <summary>
         ''' 设置。
         ''' </summary>
         Setup = 3
@@ -1372,7 +1346,7 @@ Public Class FormMain
     ''' <summary>
     ''' 通过点击导航栏改变页面。
     ''' </summary>
-    Private Sub BtnTitleSelect_Click(sender As MyRadioButton, raiseByMouse As Boolean) Handles BtnTitleSelect0.Check, BtnTitleSelect1.Check, BtnTitleSelect2.Check, BtnTitleSelect3.Check, BtnTitleSelect4.Check
+    Private Sub BtnTitleSelect_Click(sender As MyRadioButton, raiseByMouse As Boolean) Handles BtnTitleSelect0.Check, BtnTitleSelect1.Check, BtnTitleSelect3.Check, BtnTitleSelect4.Check
         If IsChangingPage Then Return
         PageChangeActual(Val(sender.Tag))
     End Sub
@@ -1451,9 +1425,6 @@ Public Class FormMain
                     If FrmDownloadLeft Is Nothing Then FrmDownloadLeft = New PageDownloadLeft
                     'PageGet 方法会在未设置 SubType 时指定默认值，并建立相关页面的实例
                     PageChangeAnim(FrmDownloadLeft, FrmDownloadLeft.PageGet(SubType))
-                Case PageType.Link '联机
-                    If FrmLinkMain Is Nothing Then FrmLinkMain = New PageLinkMain
-                    PageChangeAnim(New MyPageLeft, FrmLinkMain)
                 Case PageType.Setup '设置
                     If FrmSetupLeft Is Nothing Then FrmSetupLeft = New PageSetupLeft
                     PageChangeAnim(FrmSetupLeft, FrmSetupLeft.PageGet(SubType))

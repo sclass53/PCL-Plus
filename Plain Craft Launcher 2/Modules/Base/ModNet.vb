@@ -230,7 +230,6 @@ Retry:
                 End If
             End SyncLock
             '构建请求
-            Url = SecretCdnSign(Url)
             Request = New HttpRequestMessage(Method, Url)
             If Content IsNot Nothing AndAlso Request.Method <> HttpMethod.Get AndAlso Request.Method <> HttpMethod.Head Then '写入 Content
                 If TypeOf Content Is HttpContent Then
@@ -791,7 +790,7 @@ Retry:
             Dim Count As Integer = 0
             Urls = Urls.Distinct.ToArray
             For Each Source As String In Urls
-                Sources.Add(New NetSource With {.FailCount = 0, .Url = SecretCdnSign(Source.ReplaceLineEndings("").Trim), .Id = Count, .IsFailed = False, .Ex = Nothing})
+                Sources.Add(New NetSource With {.FailCount = 0, .Url = Source.ReplaceLineEndings("").Trim, .Id = Count, .IsFailed = False, .Ex = Nothing})
                 Count += 1
             Next
             Me.Sources = Sources
@@ -850,7 +849,7 @@ StartSingleThreadDownload:
                     Dim Source As NetSource = GetSource()
                     If Source Is Nothing Then Return Nothing
                     Dim TargetUrl As String = Source.Url
-                    If TargetUrl.Contains("pcl2-server") OrElse TargetUrl.Contains("meloong.com") OrElse TargetUrl.Contains("bmclapi") OrElse TargetUrl.Contains("github.com") OrElse
+                    If TargetUrl.Contains("meloong.com") OrElse TargetUrl.Contains("bmclapi") OrElse TargetUrl.Contains("github.com") OrElse
                        TargetUrl.Contains("optifine.net") OrElse TargetUrl.Contains("momot.rs") Then Return Nothing
                     '寻找最大碎片
                     'FUTURE: 下载引擎重做，计算下载源平均链接时间和线程下载速度，按最高时间节省来开启多线程
@@ -1602,10 +1601,6 @@ FinishExCatch:
                     Dim Detail As String = File.Sources.Select(Function(s) $"{If(s.Ex Is Nothing, "无错误信息。", s.Ex.GetDisplay(False))}（{s.Url}）").Join(vbCrLf)
                     [Error] = New Exception("文件下载失败：" & File.LocalPath & vbCrLf &
                                             "各下载源的错误如下：" & vbCrLf & Detail, [Error])
-                    '上报
-                    Telemetry("文件下载失败",
-                              "FileName", File.LocalName,
-                              "Exception", Detail)
                     Exit For
                 Next
                 '在设置 Error 对象后再更改为失败，避免 WaitForExit 无法捕获错误

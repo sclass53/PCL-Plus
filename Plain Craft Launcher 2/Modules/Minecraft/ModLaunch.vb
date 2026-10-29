@@ -160,12 +160,6 @@ Public Module ModLaunch
             Select Case LaunchLoader.State
                 Case LoadState.Finished
                     Hint(McInstanceSelected.Name & " 启动成功！", HintType.Green)
-                    '上报
-                    If Not IsSavingBatch Then
-                        Telemetry("Minecraft 启动成功",
-                              "Version", McInstanceSelected.VersionDisplayName,
-                              "LoginType", Settings.Get(Of McLoginType)("LoginType").ToString)
-                    End If
                 Case LoadState.Canceled
                     If CanceledHint Is Nothing Then
                         Hint(If(IsSavingBatch, "已取消导出启动脚本！", "已取消启动！"), HintType.Blue)
@@ -193,13 +187,6 @@ NextInner:
                 '没有特殊处理过的错误信息
                 McLaunchLog("错误：" & ex.GetDisplay(True))
                 Logger.Error(ex, If(IsSavingBatch, "导出启动脚本失败", "Minecraft 启动失败"), LogBehavior.Alert)
-                '上报
-                If Not IsSavingBatch Then
-                    Telemetry("Minecraft 启动失败",
-                              "Version", McInstanceSelected.VersionDisplayName,
-                              "LoginType", Settings.Get(Of McLoginType)("LoginType").ToString,
-                              "Exception", FilterUserName(FilterAccessToken(ex.GetDisplay(True), "*"), "*"))
-                End If
                 Throw
             End If
         End Try

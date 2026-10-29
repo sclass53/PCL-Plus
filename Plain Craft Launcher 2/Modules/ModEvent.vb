@@ -169,7 +169,6 @@ Public Class CustomEvent
         写入设置
         修改变量
         写入变量
-        加入房间
     End Enum
 
     ''' <summary>
@@ -332,16 +331,6 @@ Public Class CustomEvent
                         Logger.Warn(ex, $"写入变量失败：{Arg0} → {Args(1)}", LogBehavior.Toast)
                     End Try
 
-                Case EventType.加入房间
-                    RunInUi(
-                    Sub()
-                        If String.IsNullOrWhiteSpace(Arg) Then
-                            PageLinkMain.Join()
-                        Else
-                            If Not EventSafetyConfirm("即将加入第三方联机房间。") Then Return
-                            PageLinkMain.Join(Arg)
-                        End If
-                    End Sub)
 
                 Case Else
                     MyMsgBox("未知的事件类型：" & Type & vbCrLf & "请检查事件类型填写是否正确，或者 PCL 是否为最新版本。", "事件执行失败")

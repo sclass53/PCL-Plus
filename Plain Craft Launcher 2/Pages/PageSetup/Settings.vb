@@ -3,11 +3,9 @@ Imports System.Security.Cryptography
 Public Class Settings
 
     Public Shared ReadOnly Entries As Dictionary(Of String, Setting) = (New List(Of Setting) From {
-        New Setting("Identify", "", Source:=Sources.Registry),
         New Setting("WindowHeight", 550),
         New Setting("WindowWidth", 900),
         New Setting("AprilYear", 0, Source:=Sources.Registry, Encrypted:=True),
-        New Setting("Potatoes", "", Source:=Sources.Registry, Encrypted:=True),
         New Setting("HintDownloadThread", False, Source:=Sources.Registry),
         New Setting("HintNotice", 0, Source:=Sources.Registry),
         New Setting("HintDownload", 0, Source:=Sources.Registry),
@@ -36,7 +34,6 @@ Public Class Settings
         New Setting("SystemDebugSkipCopy", False, Source:=Sources.Registry),
         New Setting("SystemSystemCache", "", Source:=Sources.Registry),
         New Setting("SystemSystemActivity", 0),
-        New Setting("SystemSystemTelemetry", True, Source:=Sources.Registry),
         New Setting("CacheDrops", "", Source:=Sources.Registry),
         New Setting("CacheConfig", 0, Source:=Sources.Registry),
         New Setting("CacheExportConfig", "", Source:=Sources.Registry),
@@ -108,7 +105,6 @@ Public Class Settings
         New Setting("LaunchAdvanceGC", 4),
         New Setting("LaunchRamType", 0, OnChanged:=AddressOf PageSetupLaunch.UpdateRamType),
         New Setting("LaunchRamCustom", 15),
-        New Setting("LinkLastAutoJoinInviteCode", "", Source:=Sources.Registry),
         New Setting("LinkLatencyMode", 0, Source:=Sources.Registry),
         New Setting("LinkCustomPeer", ""),
         New Setting("LinkEasyTierVersion", -1, Source:=Sources.Registry),
@@ -151,7 +147,6 @@ Public Class Settings
         New Setting("UiMusicRandom", True),
         New Setting("UiMusicAuto", True),
         New Setting("UiHiddenPageDownload", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
-        New Setting("UiHiddenPageLink", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenPageSetup", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenPageOther", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenFunctionSelect", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
@@ -160,7 +155,6 @@ Public Class Settings
         New Setting("UiHiddenFunctionHidden", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenSetupLaunch", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenSetupUi", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
-        New Setting("UiHiddenSetupLink", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenSetupSystem", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenOtherHelp", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
         New Setting("UiHiddenOtherFeedback", False, OnChanged:=AddressOf PageSetupUI.HiddenRefresh),
@@ -311,16 +305,6 @@ Public Class Settings
         If Not Entries.TryGetValue(Key, Entry) Then Throw New KeyNotFoundException("未找到设置项：" & Key)
         Dim Value = Entry.GetCache(Instance)
         If Value IsNot Nothing Then Return Value
-        '对部分设置强制赋值
-        Static ForcedSettings As New Dictionary(Of String, Object) From {
-            {"UiHiddenPageLink", True},
-            {"UiHiddenSetupLink", True}
-        }
-        Dim ForcedSetting As Object = Nothing
-        If ForcedSettings.TryGetValue(Key, ForcedSetting) Then
-            Entry.Set(ForcedSetting, Instance)
-            Return ForcedSetting
-        End If
         '正常读取
         Try
             Dim GotValue As String = Nothing '先用 String 储存，避免类型转换
