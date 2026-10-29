@@ -12,11 +12,13 @@ Public Class FormMain
         '统计更新日志条目
         If BuildType = BuildTypes.Release Then
             If LastVersion < 415 Then 'Release 2.99.0.1
-                FeatureList.Add(New KeyValuePair(Of Integer, String)(4, "删除：MC 下载功能相关入口"))
+                FeatureList.Add(New KeyValuePair(Of Integer, String)(5, "恢复：MC 下载功能，可以重新安装新版本的游戏与整合包"))
+                FeatureList.Add(New KeyValuePair(Of Integer, String)(4, "删除：主题切换功能，启动器固定使用默认的龙猫蓝配色"))
+                FeatureList.Add(New KeyValuePair(Of Integer, String)(5, "新增：桌面宠物，可在 设置 → 个性化 中调整样式、大小与单击动画"))
+                FeatureList.Add(New KeyValuePair(Of Integer, String)(4, "删除：启动器自动更新功能，PCLP 不会再自行检查或下载更新"))
+                FeatureList.Add(New KeyValuePair(Of Integer, String)(4, "优化：关闭窗口时最小化到系统托盘，可通过托盘菜单退出 PCLP"))
+                FeatureList.Add(New KeyValuePair(Of Integer, String)(2, "优化：启动器默认名称改为 PCLP"))
                 FeatureList.Add(New KeyValuePair(Of Integer, String)(1, "优化：为设置更新添加部分黑名单"))
-            End If
-            If LastVersion < 413 Then 'Release 2.99.0.0
-                FeatureList.Add(New KeyValuePair(Of Integer, String)(5, "删除：为遵守相关法律法规，PCL 不再提供 MC 下载功能，非常抱歉 qwq……"))
             End If
             If LastVersion < 411 Then 'Release 2.14.0.0
                 FeatureList.Add(New KeyValuePair(Of Integer, String)(4, "新增：允许修改、添加、移除、更新已安装版本的各个组件，可从版本设置中进入"))
@@ -108,11 +110,13 @@ Public Class FormMain
             '2：BUG* IMP-
             '1：BUG-
             If LastVersion < 416 Then 'Snapshot 2.99.0.1
-                FeatureList.Add(New KeyValuePair(Of Integer, String)(4, "删除：MC 下载功能相关入口"))
+                FeatureList.Add(New KeyValuePair(Of Integer, String)(5, "恢复：MC 下载功能，可以重新安装新版本的游戏与整合包"))
+                FeatureList.Add(New KeyValuePair(Of Integer, String)(4, "删除：主题切换功能，启动器固定使用默认的龙猫蓝配色"))
+                FeatureList.Add(New KeyValuePair(Of Integer, String)(5, "新增：桌面宠物，可在 设置 → 个性化 中调整样式、大小与单击动画"))
+                FeatureList.Add(New KeyValuePair(Of Integer, String)(4, "删除：启动器自动更新功能，PCLP 不会再自行检查或下载更新"))
+                FeatureList.Add(New KeyValuePair(Of Integer, String)(4, "优化：关闭窗口时最小化到系统托盘，可通过托盘菜单退出 PCLP"))
+                FeatureList.Add(New KeyValuePair(Of Integer, String)(2, "优化：启动器默认名称改为 PCLP"))
                 FeatureList.Add(New KeyValuePair(Of Integer, String)(1, "优化：为设置更新添加部分黑名单"))
-            End If
-            If LastVersion < 414 Then 'Snapshot 2.99.0.0
-                FeatureList.Add(New KeyValuePair(Of Integer, String)(5, "删除：为遵守相关法律法规，PCL 不再提供 MC 下载功能，非常抱歉 qwq……"))
             End If
             If LastVersion < 412 Then 'Snapshot 2.14.0.0
                 FeatureList.Add(New KeyValuePair(Of Integer, String)(4, "新增：允许修改、添加、移除、更新已安装版本的各个组件，可从版本设置中进入"))
@@ -317,9 +321,8 @@ Public Class FormMain
                 Settings.Set("LaunchArgumentIndieV2", Settings.GetDefault("LaunchArgumentIndieV2"))
             End If
         End If
-        '刷新主题
-        ThemeCheckAll(False)
-        ThemeRefresh(Settings.Get(Of Integer)("UiLauncherTheme"))
+        '应用固定配色（本版本不提供主题切换）
+        ThemeRefresh()
         '注册拖拽事件（不能直接加 Handles，否则没用；#6340）
         [AddHandler](DragDrop.DragEnterEvent, New DragEventHandler(AddressOf HandleDrag), handledEventsToo:=True)
         [AddHandler](DragDrop.DragOverEvent, New DragEventHandler(AddressOf HandleDrag), handledEventsToo:=True)
@@ -418,6 +421,13 @@ Public Class FormMain
         'Timer 启动
         AniStart()
         TimerMainStart()
+        '桌面宠物与系统托盘
+        Try
+            TrayInit()
+            If Settings.Get(Of Boolean)("UiPetShow") Then PetShow()
+        Catch ex As Exception
+            Logger.Error(ex, "初始化桌宠或系统托盘失败")
+        End Try
         '加载池
         RunInNewThread(
         Sub()
@@ -447,18 +457,8 @@ Public Class FormMain
             Catch ex As Exception
                 Logger.Error(ex, "初始化加载池运行失败")
             End Try
-            '清理自动更新文件
-            Try
-                FileUtils.Delete(Paths.Base & "PCL\Plain Craft Launcher 2.exe")
-            Catch ex As Exception
-                Logger.Warn(ex, "清理自动更新文件失败")
-            End Try
             '上报
             Telemetry("启动")
-            '开源版本提示
-            If VersionBranchMain = "OpenSource" Then
-                MyMsgBox($"该版本中无法使用以下特性：{vbCrLf}- CurseForge API 调用：需要自行申请 API Key，然后添加到 ModSecret.vb 的开头{vbCrLf}- 正版登录：需要自行向微软申请 Client ID，然后添加到 ModSecret.vb 的开头{vbCrLf}- 更新与联网通知：避免滥用隐患{vbCrLf}- 主题切换：这是需要赞助解锁的纪念性质的功能，别让赞助者太伤心啦……{vbCrLf}- 百宝箱：开发早期往里面塞了些开发工具，整理起来太麻烦了……", "开源版本说明")
-            End If
         End Sub, "初始化", ThreadPriority.Lowest)
 
         Logger.Info($"第三阶段加载用时：{GetTimeMs() - ApplicationStartTick} ms")
@@ -473,12 +473,6 @@ Public Class FormMain
                              "快照版包含尚未在正式版发布的测试性功能，仅用于赞助者本人尝鲜。所以请不要发给其他人或者用于制作整合包哦！" & vbCrLf &
                              "如果你并非通过赞助或赞助者本人邀请进群获得的本程序，那么可能是有人在违规传播，记得提醒他一下啦。", "快照版使用说明")
             End Select
-            If Settings.Get(Of Integer)("SystemCount") >= 99 Then
-                If ThemeUnlock(6, False) Then
-                    MyMsgBox("你已经使用了 99 次 PCL 啦，感谢你长期以来的支持！" & vbCrLf &
-                             "隐藏主题 铁杆粉 已解锁！", "提示")
-                End If
-            End If
         End If
     End Sub
     '升级与降级事件
@@ -495,29 +489,6 @@ Public Class FormMain
         End If
         '被移除的窗口设置选项
         If Settings.Get(Of Integer)("LaunchArgumentWindowType") = 5 Then Settings.Set("LaunchArgumentWindowType", 1)
-        '修改主题设置项名称
-        If HighestVersionCode <= 207 Then
-            Dim UnlockedTheme As New List(Of String) From {"2"}
-            UnlockedTheme.AddRange(New List(Of String)(Settings.Get(Of String)("UiLauncherThemeHide").ToString.Split("|")))
-            UnlockedTheme.AddRange(New List(Of String)(Settings.Get(Of String)("UiLauncherThemeHide2").ToString.Split("|")))
-            Settings.Set("UiLauncherThemeHide2", UnlockedTheme.Distinct.ToList.Join("|"c))
-        End If
-        '重置欧皇彩
-        If LastVersionCode <= 115 AndAlso Settings.Get(Of String)("UiLauncherThemeHide2").ToString.Split("|").Contains("13") Then
-            Dim UnlockedTheme As New List(Of String)(Settings.Get(Of String)("UiLauncherThemeHide2").ToString.Split("|"))
-            UnlockedTheme.Remove("13")
-            Settings.Set("UiLauncherThemeHide2", UnlockedTheme.Join("|"c))
-            MyMsgBox("由于新版 PCL 修改了欧皇彩的解锁方式，你需要重新解锁欧皇彩。" & vbCrLf &
-                     "多谢各位的理解啦！", "重新解锁提醒")
-        End If
-        '重置滑稽彩
-        If LastVersionCode <= 152 AndAlso Settings.Get(Of String)("UiLauncherThemeHide2").ToString.Split("|").Contains("12") Then
-            Dim UnlockedTheme As New List(Of String)(Settings.Get(Of String)("UiLauncherThemeHide2").ToString.Split("|"))
-            UnlockedTheme.Remove("12")
-            Settings.Set("UiLauncherThemeHide2", UnlockedTheme.Join("|"c))
-            MyMsgBox("由于新版 PCL 修改了滑稽彩的解锁方式，你需要重新解锁滑稽彩。" & vbCrLf &
-                     "多谢各位的理解啦！", "重新解锁提醒")
-        End If
         '移动自定义皮肤
         If LastVersionCode <= 161 AndAlso FileUtils.Exists(Paths.Base & "PCL\CustomSkin.png") AndAlso Not FileUtils.Exists(Paths.AppDataThenName & "CustomSkin.png") Then
             FileUtils.Copy(Paths.Base & "PCL\CustomSkin.png", Paths.AppDataThenName & "CustomSkin.png")
@@ -569,7 +540,9 @@ Public Class FormMain
 
     '关闭
     Private Sub FormMain_Closing(sender As Object, e As CancelEventArgs) Handles Me.Closing
-        EndProgram(True)
+        If IsProgramEnding Then Return
+        '关闭窗口时隐藏到系统托盘，只有从托盘选择“退出 PCLP”才会真正结束程序
+        HideToTray()
         e.Cancel = True
     End Sub
     ''' <summary>
@@ -627,7 +600,9 @@ Public Class FormMain
         On Error Resume Next
         IsProgramEnding = True
         AniControlEnabled += 1
-        If IsUpdateWaitingRestart Then UpdateRestart(False)
+        '清理托盘图标与桌宠
+        TrayDispose()
+        PetClose()
         If ReturnCode = ProcessReturnValues.Exception Then
             If Not IsLogShown Then
                 FeedbackInfo()
@@ -644,7 +619,7 @@ Public Class FormMain
         Process.GetCurrentProcess.Kill()
     End Sub
     Private Sub BtnTitleClose_Click(sender As Object, e As RoutedEventArgs) Handles BtnTitleClose.Click
-        EndProgram(True)
+        HideToTray()
     End Sub
 
     '移动
@@ -886,6 +861,8 @@ Public Class FormMain
 
     '切回窗口
     Private Sub FormMain_Activated() Handles Me.Activated
+        '切回窗口时将桌宠重新置于窗口之上
+        PetBringToTop()
         '切回窗口时自动刷新
         Try
             If PageCurrent = PageType.InstanceSetup AndAlso PageCurrentSub = PageSubType.InstanceMod Then
@@ -1084,10 +1061,6 @@ Public Class FormMain
                     RunInUi(Sub() FrmMain.PageChange(FormMain.PageType.TaskManager))
                     Return
                 Catch ex As Exception
-                    If RestrictMcDownload AndAlso ex.Message = "为遵守相关法律法规，PCL 不再提供 MC 下载功能，非常抱歉 qwq……" Then
-                        Hint(ex.Message, HintType.Red)
-                        Return
-                    End If
                     If ex.IsCanceled Then Return
                     '安装失败，继续往后尝试
                 End Try

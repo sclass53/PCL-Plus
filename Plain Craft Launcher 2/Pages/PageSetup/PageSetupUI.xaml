@@ -7,99 +7,57 @@
     <local:MyScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" x:Name="PanBack">
         <StackPanel x:Name="PanMain" Margin="25,10">
             <local:MyCard Margin="0,15" Title="基础" x:Name="CardLauncher">
-                <Grid Margin="25,40,25,17">
-                    <StackPanel>
-                        <Grid Margin="0,0,0,6">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" SharedSizeGroup="Name1" />
-                                <ColumnDefinition Width="1*" />
-                                <ColumnDefinition Width="30" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="1*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="不透明度" Margin="0,0,20,0" />
-                            <local:MySlider local:SettingService.Key="UiLauncherTransparent" 
-                                            MaxValue="600" ValueByKey="10" Grid.ColumnSpan="5" x:Name="SliderLauncherTransparent" Grid.Column="1" />
-                            <TextBlock Grid.Row="1" VerticalAlignment="Center" Name="LabLauncherHue" Visibility="Collapsed" HorizontalAlignment="Left" Text="色调" Margin="0,10,20,0" />
-                            <local:MySlider local:SettingService.Key="UiLauncherHue" 
-                                            Grid.Row="1" Grid.Column="1" x:Name="SliderLauncherHue" Visibility="Collapsed" MaxValue="360" ValueByKey="10" Margin="0,10,0,0" />
-                            <TextBlock Grid.Row="2" VerticalAlignment="Center" Name="LabLauncherDelta" Visibility="Collapsed" HorizontalAlignment="Left" Text="色调渐变" Margin="0,10,20,0" />
-                            <local:MySlider local:SettingService.Key="UiLauncherDelta" 
-                                            Grid.Row="2" Grid.Column="1" x:Name="SliderLauncherDelta" Visibility="Collapsed" MaxValue="180" ValueByKey="5" Margin="0,10,0,0" />
-                            <TextBlock Grid.Row="1" Grid.Column="3" VerticalAlignment="Center" Name="LabLauncherSat" Visibility="Collapsed" HorizontalAlignment="Left" Text="饱和度" Margin="0,10,20,0" />
-                            <local:MySlider local:SettingService.Key="UiLauncherSat" 
-                                            Grid.Row="1" Grid.Column="4" x:Name="SliderLauncherSat" Visibility="Collapsed" MaxValue="100" ValueByKey="5" Margin="0,10,0,0" />
-                            <TextBlock Grid.Row="2" Grid.Column="3" VerticalAlignment="Center" Name="LabLauncherLight" Visibility="Collapsed" HorizontalAlignment="Left" Text="亮度" Margin="0,10,20,0" />
-                            <local:MySlider local:SettingService.Key="UiLauncherLight" 
-                                            Grid.Row="2" Grid.Column="4" x:Name="SliderLauncherLight" Visibility="Collapsed" MaxValue="40" ValueByKey="5" Margin="0,10,0,0" />
-                        </Grid>
-                        <Grid x:Name="PanLauncherTheme" Height="90" Margin="0,0,0,7">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" SharedSizeGroup="Name1" />
-                                <ColumnDefinition />
-                                <ColumnDefinition />
-                                <ColumnDefinition />
-                                <ColumnDefinition />
-                                <ColumnDefinition />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="主题" Margin="0,0,20,0" />
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="隐藏主题" Margin="0,0,20,0" Grid.Row="1" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="0" 
-                                              Grid.Column="1" Grid.Row="0" Text="龙猫蓝" x:Name="RadioLauncherTheme0" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="1" 
-                                              Grid.Column="2" Grid.Row="0" Text="甜柠青" x:Name="RadioLauncherTheme1" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="2" 
-                                              Grid.Column="3" Grid.Row="0" Text="小草绿" x:Name="RadioLauncherTheme2" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="3" 
-                                              Grid.Column="4" Grid.Row="0" Text="菠萝黄" x:Name="RadioLauncherTheme3" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="4" 
-                                              Grid.Column="5" Grid.Row="0" Text="橡木棕" x:Name="RadioLauncherTheme4" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="5" 
-                                              Grid.Column="1" Grid.Row="1" Text="玄素黑" x:Name="RadioLauncherTheme5" Opacity="0" ToolTip="灰色是个谎言" />
-                            <local:MyRadioBox Grid.Column="1" Grid.Row="1" Text="玄素黑" x:Name="RadioLauncherTheme5Gray" IsEnabled="False" Opacity="1" />
-                            <TextBlock Grid.Column="1" Grid.Row="1" x:Name="LabLauncherTheme5Unlock" Background="{StaticResource ColorBrushSemiTransparent}" ToolTip="灰色是个谎言" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="12" 
-                                              Grid.Column="2" Grid.Row="1" Text="滑稽彩" x:Name="RadioLauncherTheme12" IsEnabled="False" ToolTip="滑稽树上滑稽果，滑稽树下你和我，滑稽之日搞事情，欢乐多又多" ToolTipService.ShowOnDisabled="True" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="6" 
-                                              Grid.Column="3" Grid.Row="1" Text="铁杆粉" x:Name="RadioLauncherTheme6" IsEnabled="False" ToolTip="99 次重逢的喜悦" ToolTipService.ShowOnDisabled="True" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="7" 
-                                              Grid.Column="4" Grid.Row="1" Text="神秘紫" x:Name="RadioLauncherTheme7" IsEnabled="False" ToolTip="072 101 108 112 032 068 101 118 032 048 046 052 046 052" ToolTipService.ShowOnDisabled="True" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="13" 
-                                              Grid.Column="5" Grid.Row="1" Text="欧皇彩" x:Name="RadioLauncherTheme13" IsEnabled="False" ToolTip="这就是传说中的欧皇了吧" ToolTipService.ShowOnDisabled="True" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="8" 
-                                              Grid.Column="1" Grid.Row="2" Text="秋仪金" x:Name="RadioLauncherTheme8" IsEnabled="False" />
-                            <TextBlock Grid.Column="1" Grid.Row="2" x:Name="LabLauncherTheme8Copy" Background="{StaticResource ColorBrushSemiTransparent}" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="9" 
-                                              Grid.Column="2" Grid.Row="2" Text="活跃橙" x:Name="RadioLauncherTheme9" IsEnabled="False" />
-                            <TextBlock Grid.Column="2" Grid.Row="2" x:Name="LabLauncherTheme9Copy" Background="{StaticResource ColorBrushSemiTransparent}" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="10" 
-                                              Grid.Column="3" Grid.Row="2" Text="跳票红" x:Name="RadioLauncherTheme10" IsEnabled="False" ToolTip="进行一次正版登录，支持正版游戏！" ToolTipService.ShowOnDisabled="True" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="11" 
-                                              Grid.Column="4" Grid.Row="2" Text="极客蓝" x:Name="RadioLauncherTheme11" IsEnabled="False" ToolTip="右键打开解密游戏入口" />
-                            <TextBlock Grid.Column="4" Grid.Row="2" x:Name="LabLauncherTheme11Click" Background="{StaticResource ColorBrushSemiTransparent}" />
-                            <local:MyRadioBox local:SettingService.Key="UiLauncherTheme" local:SettingService.Value="14" 
-                                              Grid.Column="5" Grid.Row="2" Text="自定义" x:Name="RadioLauncherTheme14" IsEnabled="False" ToolTip="需要解锁五个隐藏主题" ToolTipService.ShowOnDisabled="True" />
-                        </Grid>
-                        <local:MyCheckBox local:SettingService.Key="UiLauncherLogo" Text="打开启动器时显示 PCL 图标" Margin="-1,0,0,1" Height="22" />
-                    </StackPanel>
-                    <Border Background="#DDDDDDDD" Margin="-8,23,-5,28" CornerRadius="4" Name="PanLauncherHide" Visibility="Collapsed">
-                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="如果可以小小赞助一下 PCL，就能解锁主题颜色更换功能啦……&#xa;多亏了大家的支持，PCL 才能在免费、无任何广告的情况下维持数年的更新（磕头）！" FontSize="13" Margin="0,0,0,0" />
-                            <local:MyButton Height="32" MinWidth="140" Text="支持 PCL 开发！" Padding="13,0" HorizontalAlignment="Center" Margin="0,9,0,0" ColorType="Highlight"
-                                            local:CustomEventService.EventType="打开网页" local:CustomEventService.EventData="https://meloong.com/afd/a/LTCat" />
-                        </StackPanel>
-                    </Border>
-                </Grid>
+                <StackPanel Margin="25,40,25,17">
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Name1" />
+                            <ColumnDefinition Width="1*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="不透明度" Margin="0,0,20,0" />
+                        <local:MySlider local:SettingService.Key="UiLauncherTransparent" 
+                                        MaxValue="600" ValueByKey="10" x:Name="SliderLauncherTransparent" Grid.Column="1" />
+                    </Grid>
+                    <local:MyCheckBox local:SettingService.Key="UiLauncherLogo" Text="打开启动器时显示 PCL 图标" Margin="-1,0,0,1" Height="22" />
+                </StackPanel>
+            </local:MyCard>
+            <local:MyCard Margin="0,0,0,15" Title="桌面宠物">
+                <StackPanel Margin="25,40,25,20">
+                    <local:MyCheckBox Text="显示桌面宠物" x:Name="CheckPetShow" local:SettingService.Key="UiPetShow" Height="22" />
+                    <local:MyHint Margin="0,10,0,0" Text="左键拖动位置，单击播放交互动画，双击重新呼出启动器。&#xa;右键桌宠只会显示“隐藏桌宠”，其余设置都可以在这里调整。" />
+                    <Grid Height="28" Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Name" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="桌宠样式" Margin="0,0,20,0" />
+                        <local:MyComboBox x:Name="ComboPetTheme" Grid.Column="1" local:SettingService.Key="UiPetTheme">
+                            <local:MyComboBoxItem Content="苦力怕" />
+                            <local:MyComboBoxItem Content="营火" />
+                            <local:MyComboBoxItem Content="末地（15 FPS）" />
+                            <local:MyComboBoxItem Content="末地（30 FPS）" />
+                        </local:MyComboBox>
+                    </Grid>
+                    <Grid Height="28" Margin="0,7,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Name" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="桌宠大小" Margin="0,0,20,0" />
+                        <local:MySlider x:Name="SliderPetScale" Grid.Column="1" local:SettingService.Key="UiPetScale" MaxValue="200"
+                                        ToolTip="桌宠的显示大小，按原图的百分比缩放" />
+                    </Grid>
+                    <Grid Height="28" Margin="0,7,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Name" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="单击动画" Margin="0,0,20,0" />
+                        <local:MyComboBox x:Name="ComboPetMode" Grid.Column="1" local:SettingService.Key="UiPetMode">
+                            <local:MyComboBoxItem Content="立即播放交互动画" />
+                            <local:MyComboBoxItem Content="等待当前动画播放完毕" />
+                        </local:MyComboBox>
+                    </Grid>
+                </StackPanel>
             </local:MyCard>
             <local:MyCard x:Name="CardBackground" Margin="0,0,0,15" Title="背景图片">
                 <StackPanel Margin="25,40,25,20">

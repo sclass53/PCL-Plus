@@ -1005,7 +1005,6 @@ NextFile:
 #End Region
 
     Public DragControl = Nothing
-    Private Timer4Count As Integer = 0
     Private Timer150Count As Integer = 0
     Private Sub TimerMain()
         Try
@@ -1014,22 +1013,10 @@ NextFile:
             MyMsgBoxTick()
             FrmMain.DragTick()
             LoaderTaskbarProgressRefresh()
-            If ThemeDontClick = 2 Then ThemeRefresh()
 #End Region
         Catch ex As Exception
             Logger.Error(ex, "短程主时钟执行异常", LogBehavior.AlertThenCrash)
         End Try
-        Timer4Count += 1
-        If Timer4Count = 4 Then
-            Timer4Count = 0
-            Try
-#Region "每 250ms 执行一次的代码"
-                If ThemeNow = 12 Then ThemeRefresh()
-#End Region
-            Catch ex As Exception
-                Logger.Warn(ex, "中程主时钟执行异常")
-            End Try
-        End If
         Timer150Count += 1
         If Timer150Count = 150 Then
             Timer150Count = 0
@@ -1078,6 +1065,522 @@ NextFile:
                 Logger.Error(ex, "愚人节主时钟出错")
             End Try
         End Sub, "Timer Main Fool")
+    End Sub
+
+End Module
+
+'============================================================
+'  桌面宠物
+'============================================================
+
+''' <summary>
+''' 桌面宠物窗口。无边框、透明、置顶，循环播放 GIF，单击播放交互动画，双击呼出主界面。
+''' </summary>
+Public Class FormPet
+    Inherits Window
+
+    ''' <summary>
+    ''' 一种桌宠主题。
+    ''' </summary>
+    Public Class PetThemeInfo
+        Public Name As String
+        Public MainGif As String
+        Public ClickGif As String
+        Public WaitLoop As Boolean
+    End Class
+
+    ''' <summary>
+    ''' 所有可选的桌宠主题，GIF 以内嵌资源（Pet.名称.gif）的形式提供。
+    ''' </summary>
+    Public Shared ReadOnly Themes As New List(Of PetThemeInfo) From {
+        New PetThemeInfo With {.Name = "苦力怕", .MainGif = "creeper_n", .ClickGif = "creeper_l", .WaitLoop = True},
+        New PetThemeInfo With {.Name = "营火", .MainGif = "campfire", .ClickGif = "campfire", .WaitLoop = True},
+        New PetThemeInfo With {.Name = "末地（15 FPS）", .MainGif = "endc_n", .ClickGif = "endc_l", .WaitLoop = False},
+        New PetThemeInfo With {.Name = "末地（30 FPS）", .MainGif = "endc2_n", .ClickGif = "endc2_l", .WaitLoop = False}
+    }
+
+    '界面
+    Private ReadOnly PanPet As New Grid
+    Private ReadOnly ImgPet As New Image
+
+    '动画
+    Private ReadOnly Frames As New List(Of BitmapSource)
+    Private ReadOnly FrameDelays As New List(Of Integer)
+    Private FrameIndex As Integer = -1
+    Private ReadOnly AnimTimer As New System.Windows.Threading.DispatcherTimer
+    Private IsOneShot As Boolean = False
+    Private OneShotCallback As Action = Nothing
+    Private IsPlayingClick As Boolean = False
+    Private PendingClick As Boolean = False
+
+    '交互
+    Private DragScreenStart As Point
+    Private DragWindowStart As Point
+    Private IsDragging As Boolean = False
+    Private LastClickTick As Integer = 0
+    Private ReadOnly DoubleClickInterval As Integer = System.Windows.Forms.SystemInformation.DoubleClickTime
+
+    '当前设置
+    Private ThemeIndex As Integer = 0
+    Private PetScale As Double = 0.75
+
+    Public Sub New()
+        '窗口
+        WindowStyle = WindowStyle.None
+        AllowsTransparency = True
+        Background = Brushes.Transparent
+        ShowInTaskbar = False
+        Topmost = True
+        ResizeMode = ResizeMode.NoResize
+        ShowActivated = False
+        SizeToContent = SizeToContent.WidthAndHeight
+        WindowStartupLocation = WindowStartupLocation.Manual
+        Title = "PCLP 桌宠"
+        '内容
+        PanPet.Background = Brushes.Transparent
+        ImgPet.Stretch = Stretch.Uniform
+        ImgPet.SnapsToDevicePixels = True
+        PanPet.Children.Add(ImgPet)
+        Content = PanPet
+        '右键菜单：只有隐藏桌宠一项，其余设置都在启动器设置里
+        Dim Menu As New ContextMenu()
+        Dim ItemHide As New MyMenuItem With {.Header = "隐藏桌宠"}
+        AddHandler ItemHide.Click, Sub(sender As Object, e As RoutedEventArgs) Settings.Set("UiPetShow", False)
+        Menu.Items.Add(ItemHide)
+        PanPet.ContextMenu = Menu
+        '动画时钟
+        AnimTimer.Interval = TimeSpan.FromMilliseconds(80)
+        AddHandler AnimTimer.Tick, AddressOf AnimTick
+        '鼠标交互
+        AddHandler PanPet.MouseLeftButtonDown, AddressOf PanPet_MouseLeftButtonDown
+        AddHandler PanPet.MouseMove, AddressOf PanPet_MouseMove
+        AddHandler PanPet.MouseLeftButtonUp, AddressOf PanPet_MouseLeftButtonUp
+        AddHandler Me.IsVisibleChanged, AddressOf FormPet_IsVisibleChanged
+    End Sub
+
+    ''' <summary>
+    ''' 应用当前设置并显示桌宠。
+    ''' </summary>
+    Public Sub ShowPet()
+        ApplySetting()
+        If Not IsVisible Then
+            Show()
+            UpdateLayout()
+            RestorePosition()
+        End If
+        BringToTop()
+    End Sub
+
+    Private Sub ApplySetting()
+        Dim NewTheme = Settings.Get(Of Integer)("UiPetTheme").Clamp(0, Themes.Count - 1)
+        Dim NewScale = Math.Max(0.1, Math.Min(3.0, Settings.Get(Of Integer)("UiPetScale") / 100))
+        Dim NeedReload = NewTheme <> ThemeIndex OrElse Frames.Count = 0
+        ThemeIndex = NewTheme
+        PetScale = NewScale
+        If NeedReload Then
+            '切换样式时重新开始播放主动画
+            IsPlayingClick = False
+            PendingClick = False
+            PlayMainAnimation()
+        ElseIf Frames.Count > 0 Then
+            '只是改变大小时，直接应用新的尺寸
+            ShowFrame(Math.Max(0, FrameIndex))
+        End If
+    End Sub
+
+    Private Function GetGifStream(Name As String) As IO.Stream
+        Return System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Pet." & Name & ".gif")
+    End Function
+
+    Private Sub PlayMainAnimation()
+        LoadAnimation(Themes(ThemeIndex).MainGif, False, Nothing)
+    End Sub
+
+    Private Sub LoadAnimation(Name As String, OneShot As Boolean, Callback As Action)
+        AnimTimer.Stop()
+        Frames.Clear()
+        FrameDelays.Clear()
+        FrameIndex = -1
+        IsOneShot = OneShot
+        OneShotCallback = Callback
+        Dim GifStream = GetGifStream(Name)
+        If GifStream Is Nothing Then
+            Logger.Warn($"未找到桌宠动画资源：{Name}")
+            Return
+        End If
+        Try
+            '使用 GDI+ 逐帧合成 GIF：GIF 的帧可能只是画面的一部分（带偏移），
+            'WPF 自带的解码器会丢弃偏移导致画面跳动，GDI+ 会按整幅画布合成每一帧
+            Using GifStream
+                Using DrawingImage = System.Drawing.Image.FromStream(GifStream)
+                    Dim FrameDim = New System.Drawing.Imaging.FrameDimension(DrawingImage.FrameDimensionsList(0))
+                    Dim FrameCount = DrawingImage.GetFrameCount(FrameDim)
+                    Dim Delays As Integer() = Nothing
+                    Try
+                        Dim PropertyItem = DrawingImage.GetPropertyItem(&H5100)
+                        If PropertyItem IsNot Nothing Then
+                            Delays = New Integer(FrameCount - 1) {}
+                            For i = 0 To FrameCount - 1
+                                Delays(i) = Math.Max(20, BitConverter.ToInt32(PropertyItem.Value, i * 4) * 10)
+                            Next
+                        End If
+                    Catch
+                    End Try
+                    For i = 0 To FrameCount - 1
+                        DrawingImage.SelectActiveFrame(FrameDim, i)
+                        Using FrameBmp As New System.Drawing.Bitmap(DrawingImage.Width, DrawingImage.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb)
+                            Using FrameGraphics = System.Drawing.Graphics.FromImage(FrameBmp)
+                                FrameGraphics.Clear(System.Drawing.Color.Transparent)
+                                FrameGraphics.DrawImageUnscaled(DrawingImage, 0, 0)
+                            End Using
+                            Frames.Add(ToBitmapSource(FrameBmp))
+                        End Using
+                        FrameDelays.Add(If(Delays Is Nothing, 80, Delays(i)))
+                    Next
+                End Using
+            End Using
+        Catch ex As Exception
+            Logger.Error(ex, $"解析桌宠动画失败：{Name}")
+            Return
+        End Try
+        If Frames.Count = 0 Then Return
+        ShowFrame(0)
+        If IsVisible Then AnimTimer.Start()
+    End Sub
+
+    ''' <summary>
+    ''' 将 GDI+ 位图转为冻结的 WPF 位图源。
+    ''' </summary>
+    Private Shared Function ToBitmapSource(Bmp As System.Drawing.Bitmap) As BitmapSource
+        Dim HBitmap = Bmp.GetHbitmap()
+        Try
+            Dim Source = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(HBitmap, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions())
+            Source.Freeze()
+            Return Source
+        Finally
+            DeleteObject(HBitmap)
+        End Try
+    End Function
+
+    <Runtime.InteropServices.DllImport("gdi32.dll")>
+    Private Shared Function DeleteObject(hObject As IntPtr) As Boolean
+    End Function
+
+    Private Sub ShowFrame(Index As Integer)
+        If Index < 0 OrElse Index >= Frames.Count Then Return
+        FrameIndex = Index
+        Dim Frame = Frames(Index)
+        ImgPet.Source = Frame
+        '将 GIF 的像素尺寸换算为 WPF 尺寸，并按 DPI 缩放，保证显示大小与设定比例一致
+        Dim PixelToWpf As Double = GetWPFSize(1.0)
+        ImgPet.Width = Math.Max(1.0, Frame.PixelWidth * PetScale * PixelToWpf)
+        ImgPet.Height = Math.Max(1.0, Frame.PixelHeight * PetScale * PixelToWpf)
+    End Sub
+
+    Private Sub AnimTick(sender As Object, e As EventArgs)
+        If Frames.Count = 0 Then Return
+        Dim NextIndex = FrameIndex + 1
+        If NextIndex >= Frames.Count Then
+            '整段动画播放完毕
+            If IsOneShot Then
+                AnimTimer.Stop()
+                Dim Callback = OneShotCallback
+                OneShotCallback = Nothing
+                IsOneShot = False
+                If Callback IsNot Nothing Then Callback()
+                Return
+            End If
+            '等待模式：主循环播完后再播放点击动画
+            If PendingClick Then
+                PendingClick = False
+                StartClickAnimation()
+                Return
+            End If
+            NextIndex = 0
+        End If
+        ShowFrame(NextIndex)
+        AnimTimer.Interval = TimeSpan.FromMilliseconds(FrameDelays(NextIndex))
+    End Sub
+
+    Private Sub StartClickAnimation()
+        Dim ThemeInfo = Themes(ThemeIndex)
+        If IsPlayingClick Then Return
+        If ThemeInfo.ClickGif = ThemeInfo.MainGif Then Return
+        IsPlayingClick = True
+        LoadAnimation(ThemeInfo.ClickGif, True, AddressOf StopClickAnimation)
+    End Sub
+
+    Private Sub StopClickAnimation()
+        IsPlayingClick = False
+        PlayMainAnimation()
+    End Sub
+
+    ''' <summary>
+    ''' 单击桌宠：播放一次交互动画。
+    ''' </summary>
+    Private Sub PetClick()
+        If IsPlayingClick Then Return
+        Dim ThemeInfo = Themes(ThemeIndex)
+        If ThemeInfo.ClickGif = ThemeInfo.MainGif Then Return
+        If Settings.Get(Of Integer)("UiPetMode") = 1 Then
+            PendingClick = True
+        Else
+            StartClickAnimation()
+        End If
+    End Sub
+
+    Private Sub PanPet_MouseLeftButtonDown(sender As Object, e As MouseButtonEventArgs)
+        DragScreenStart = PointToScreen(e.GetPosition(Me))
+        DragWindowStart = New Point(Left, Top)
+        IsDragging = False
+        PanPet.CaptureMouse()
+        e.Handled = True
+    End Sub
+
+    Private Sub PanPet_MouseMove(sender As Object, e As MouseEventArgs)
+        If Not PanPet.IsMouseCaptured Then Return
+        If e.LeftButton <> MouseButtonState.Pressed Then Return
+        Dim NowPoint = PointToScreen(e.GetPosition(Me))
+        Dim DX = NowPoint.X - DragScreenStart.X
+        Dim DY = NowPoint.Y - DragScreenStart.Y
+        If Not IsDragging AndAlso (Math.Abs(DX) > 5 OrElse Math.Abs(DY) > 5) Then IsDragging = True
+        If IsDragging Then
+            'PointToScreen 返回的是物理像素，需要换算为 WPF 尺寸才能正确跟随鼠标
+            Left = DragWindowStart.X + GetWPFSize(DX)
+            Top = DragWindowStart.Y + GetWPFSize(DY)
+        End If
+    End Sub
+
+    Private Sub PanPet_MouseLeftButtonUp(sender As Object, e As MouseButtonEventArgs)
+        If PanPet.IsMouseCaptured Then PanPet.ReleaseMouseCapture()
+        If IsDragging Then
+            IsDragging = False
+            PendingClick = False
+            SavePosition()
+            Return
+        End If
+        Dim NowTick = Environment.TickCount
+        If LastClickTick <> 0 AndAlso NowTick - LastClickTick <= DoubleClickInterval Then
+            '双击：呼出启动器
+            LastClickTick = 0
+            PendingClick = False
+            ModPet.ShowMainWindow()
+        Else
+            '单击：播放交互动画
+            LastClickTick = NowTick
+            PetClick()
+        End If
+    End Sub
+
+    Private Sub RestorePosition()
+        Dim Area = SystemParameters.WorkArea
+        Dim X = Settings.Get(Of Integer)("UiPetX")
+        Dim Y = Settings.Get(Of Integer)("UiPetY")
+        If X >= 0 AndAlso Y >= 0 AndAlso X <= Area.Right - 16 AndAlso Y <= Area.Bottom - 16 Then
+            Left = X
+            Top = Y
+        Else
+            Left = Area.Left + (Area.Width - ActualWidth) / 2
+            Top = Area.Bottom - ActualHeight - 40
+        End If
+    End Sub
+
+    Private Sub SavePosition()
+        Settings.Set("UiPetX", CInt(Left))
+        Settings.Set("UiPetY", CInt(Top))
+    End Sub
+
+    Private Sub FormPet_IsVisibleChanged(sender As Object, e As DependencyPropertyChangedEventArgs)
+        If IsVisible Then
+            If Frames.Count > 0 AndAlso Not AnimTimer.IsEnabled Then AnimTimer.Start()
+        Else
+            AnimTimer.Stop()
+        End If
+    End Sub
+
+    <Runtime.InteropServices.DllImport("user32.dll")>
+    Private Shared Function SetWindowPos(hWnd As IntPtr, hWndInsertAfter As IntPtr, X As Integer, Y As Integer, cx As Integer, cy As Integer, uFlags As UInteger) As Boolean
+    End Function
+
+    ''' <summary>
+    ''' 将桌宠重新置于所有窗口之上（主界面获得焦点时调用）。
+    ''' </summary>
+    Public Sub BringToTop()
+        If Not IsVisible Then Return
+        Try
+            Dim Hwnd = New System.Windows.Interop.WindowInteropHelper(Me).Handle
+            'HWND_TOPMOST，SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE
+            SetWindowPos(Hwnd, New IntPtr(-1), 0, 0, 0, 0, &H1UI Or &H2UI Or &H10UI)
+        Catch ex As Exception
+            Logger.Warn(ex, "置顶桌宠失败")
+        End Try
+    End Sub
+
+End Class
+
+''' <summary>
+''' 桌面宠物与系统托盘的统一入口。
+''' </summary>
+Public Module ModPet
+
+    ''' <summary>
+    ''' 当前的桌面宠物窗口，未创建时为 Nothing。
+    ''' </summary>
+    Public FrmPet As FormPet
+
+    ''' <summary>
+    ''' 根据设置刷新桌宠的显示状态（由设置项的 OnChanged 调用）。
+    ''' </summary>
+    Public Sub PetRefresh(Optional NewValue As Object = Nothing)
+        RunInUi(
+        Sub()
+            If Settings.Get(Of Boolean)("UiPetShow") Then PetShow() Else PetHide()
+        End Sub)
+    End Sub
+
+    ''' <summary>
+    ''' 显示桌面宠物。
+    ''' </summary>
+    Public Sub PetShow()
+        RunInUi(
+        Sub()
+            If Not Settings.Get(Of Boolean)("UiPetShow") Then Return
+            If FrmPet Is Nothing Then FrmPet = New FormPet
+            FrmPet.ShowPet()
+        End Sub)
+    End Sub
+
+    ''' <summary>
+    ''' 隐藏桌面宠物（不修改设置）。
+    ''' </summary>
+    Public Sub PetHide()
+        RunInUi(
+        Sub()
+            FrmPet?.Hide()
+        End Sub)
+    End Sub
+
+    ''' <summary>
+    ''' 关闭并销毁桌面宠物窗口，用于程序退出时清理。
+    ''' </summary>
+    Public Sub PetClose()
+        If FrmPet Is Nothing Then Return
+        Try
+            FrmPet.Close()
+        Catch ex As Exception
+            Logger.Warn(ex, "关闭桌宠窗口失败")
+        End Try
+        FrmPet = Nothing
+    End Sub
+
+    ''' <summary>
+    ''' 将桌宠重新置于所有窗口之上。
+    ''' </summary>
+    Public Sub PetBringToTop()
+        RunInUi(
+        Sub()
+            FrmPet?.BringToTop()
+        End Sub)
+    End Sub
+
+    '===== 系统托盘 =====
+
+    Public Tray As System.Windows.Forms.NotifyIcon
+    Private TrayMenu As System.Windows.Forms.ContextMenuStrip
+    Private IsTrayHintShown As Boolean = False
+
+    ''' <summary>
+    ''' 初始化系统托盘图标。
+    ''' </summary>
+    Public Sub TrayInit()
+        RunInUi(
+        Sub()
+            If Tray IsNot Nothing Then Return
+            Try
+                Dim NewTray As New System.Windows.Forms.NotifyIcon With {.Text = "PCLP", .Visible = True}
+                Try
+                    NewTray.Icon = System.Drawing.Icon.ExtractAssociatedIcon(PathExe)
+                Catch ex As Exception
+                    Logger.Warn(ex, "读取托盘图标失败")
+                End Try
+                '右键菜单
+                TrayMenu = New System.Windows.Forms.ContextMenuStrip()
+                Dim ItemShow As New System.Windows.Forms.ToolStripMenuItem("显示主界面")
+                AddHandler ItemShow.Click, Sub(sender As Object, e As EventArgs) ShowMainWindow()
+                Dim ItemExit As New System.Windows.Forms.ToolStripMenuItem("退出 PCLP")
+                AddHandler ItemExit.Click, Sub(sender As Object, e As EventArgs) FrmMain.EndProgram(False)
+                TrayMenu.Items.Add(ItemShow)
+                TrayMenu.Items.Add(New System.Windows.Forms.ToolStripSeparator())
+                TrayMenu.Items.Add(ItemExit)
+                NewTray.ContextMenuStrip = TrayMenu
+                '单击托盘图标即可呼出主界面
+                AddHandler NewTray.MouseClick,
+                    Sub(sender As Object, e As System.Windows.Forms.MouseEventArgs)
+                        Logger.Info($"点击托盘图标：{e.Button}")
+                        If e.Button = System.Windows.Forms.MouseButtons.Left Then ShowMainWindow()
+                    End Sub
+                Tray = NewTray
+                Logger.Info("已初始化系统托盘图标")
+            Catch ex As Exception
+                Logger.Error(ex, "初始化系统托盘失败")
+            End Try
+        End Sub)
+    End Sub
+
+    ''' <summary>
+    ''' 销毁系统托盘图标，用于程序退出时清理。
+    ''' </summary>
+    Public Sub TrayDispose()
+        If Tray Is Nothing Then Return
+        Try
+            Tray.Visible = False
+            Tray.Dispose()
+        Catch ex As Exception
+            Logger.Warn(ex, "关闭系统托盘图标失败")
+        End Try
+        Tray = Nothing
+        TrayMenu = Nothing
+    End Sub
+
+    Private Sub TrayShowHint()
+        If Tray Is Nothing OrElse IsTrayHintShown Then Return
+        IsTrayHintShown = True
+        Try
+            Tray.ShowBalloonTip(3000, "PCLP", "PCLP 已最小化到系统托盘，双击托盘图标或桌宠即可重新打开。" & vbCrLf & "右键托盘图标可以退出 PCLP。", System.Windows.Forms.ToolTipIcon.Info)
+        Catch ex As Exception
+            Logger.Warn(ex, "显示托盘提示失败")
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' 隐藏主窗口（关闭窗口时调用），只保留托盘图标与桌宠。
+    ''' </summary>
+    Public Sub HideToTray()
+        RunInUi(
+        Sub()
+            FrmMain.Hide()
+            Logger.Info("已隐藏主窗口，最小化到系统托盘")
+            TrayShowHint()
+        End Sub)
+    End Sub
+
+    ''' <summary>
+    ''' 重新显示主窗口（双击桌宠或托盘图标时调用）。
+    ''' </summary>
+    Public Sub ShowMainWindow()
+        RunInUi(
+        Sub()
+            If FrmMain Is Nothing Then Return
+            Logger.Info("呼出主界面")
+            FrmMain.Show()
+            If FrmMain.WindowState = WindowState.Minimized Then FrmMain.WindowState = WindowState.Normal
+            '切换置顶以强制将窗口拉到前台
+            FrmMain.Topmost = False
+            FrmMain.Topmost = True
+            FrmMain.Activate()
+            FrmMain.Focus()
+            PetBringToTop()
+        End Sub)
     End Sub
 
 End Module

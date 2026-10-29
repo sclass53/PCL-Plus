@@ -916,15 +916,17 @@
     <ProjectReference Include="..\MeloongCore\Shared\MeloongCore.csproj">
       <Project>{d22bbf3c-2177-0208-4e29-8466aa41ac6f}</Project>
       <Name>MeloongCore</Name>
+      <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\MeloongCore\Wpf\MeloongCore.Wpf.csproj">
       <Project>{2dffe2a0-1101-816b-d240-f644b2d74a68}</Project>
       <Name>MeloongCore.Wpf</Name>
+      <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\PCLCS\PCLCS.csproj">
       <Project>{32de4aaf-f4d6-42c5-9604-19236de96c69}</Project>
       <Name>PCLCS</Name>
-      <Private>True</Private>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -948,7 +950,32 @@
   <ItemGroup>
     <Resource Include="Images\Heads\ChongQing.png" />
     <Resource Include="Images\Heads\HerobrineXia.png" />
+    <Resource Include="Images\Heads\DratedGNZ.png" />
 
+  </ItemGroup>
+  <ItemGroup>
+    <!--桌面宠物动画（来自仓库中的 fr/imgs，以内嵌资源形式打包，保证单文件发布）-->
+    <EmbeddedResource Include="Images\Pet\campfire.gif">
+      <LogicalName>Pet.campfire.gif</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Images\Pet\creeper_l.gif">
+      <LogicalName>Pet.creeper_l.gif</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Images\Pet\creeper_n.gif">
+      <LogicalName>Pet.creeper_n.gif</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Images\Pet\endc_l.gif">
+      <LogicalName>Pet.endc_l.gif</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Images\Pet\endc_n.gif">
+      <LogicalName>Pet.endc_n.gif</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Images\Pet\endc2_l.gif">
+      <LogicalName>Pet.endc2_l.gif</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Images\Pet\endc2_n.gif">
+      <LogicalName>Pet.endc2_n.gif</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>

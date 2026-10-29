@@ -272,7 +272,7 @@ GroupDone:
         End If
         '实例化每个元素
         For Each Version In Versions
-            If Not RestrictMcDownload AndAlso TargetResourceType = ResourceTypes.ModPack Then
+            If TargetResourceType = ResourceTypes.ModPack Then
                 Stack.Children.Add(Version.ToListItem(AddressOf Install_Click, AddressOf Save_Click, IsBadDisplay:=HasDuplicates))
             Else
                 Stack.Children.Add(Version.ToListItem(AddressOf Save_Click, IsBadDisplay:=HasDuplicates))

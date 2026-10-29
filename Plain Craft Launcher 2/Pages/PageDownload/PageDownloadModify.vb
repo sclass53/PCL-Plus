@@ -56,7 +56,7 @@ Public Class PageDownloadModify
         Dim Manifest = Configs.McInstallManifest.Get(Task.Input.Config)
         If Manifest IsNot Nothing AndAlso Manifest.SchemaVersion > Versions.McInstallManifestVersion Then
             Logger.Warn($"安装清单由更新版本的 PCL 创建（清单版本：{Manifest.SchemaVersion}，当前版本：{Versions.McInstallManifestVersion}）")
-            Throw New Exception($"更新 PCL 后才能修改它！点击【设置 → 其他 → 检查更新】以更新。")
+            Throw New Exception($"该安装清单由更新版本的 PCL 创建，请使用更新版本的 PCL 打开它后再修改。")
         End If
         If Manifest IsNot Nothing Then
             Dim LatestManifest = Manifest.RefreshModComponents(Task.Input.PathIndie)
@@ -312,7 +312,7 @@ Public Class PageDownloadModify
         TextSelectName.ValidateRules = New ObjectModel.Collection(Of Validate) From {
             New ValidateFolderName(McFolderSelected & "versions", IgnoreList:=New List(Of String) From {OriginalName})}
         '修改页 UI
-        CardMinecraft.Visibility = If(RestrictMcDownload, Visibility.Collapsed, Visibility.Visible)
+        CardMinecraft.Visibility = Visibility.Visible
         BtnBack.Visibility = Visibility.Collapsed
         ImgLogo.Margin = New Thickness(15, 15, 0, 0)
         TextSelectName.Margin = New Thickness(56, 16, 16, 0)

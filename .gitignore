@@ -342,3 +342,12 @@ ASALocalRun/
 healthchecksdb
 
 MaskFiles/
+
+# Local build workspace / artifacts
+.build-local/
+
+# Generated Files
+Plain Craft Launcher 2/bin/
+Plain Craft Launcher 2/obj/
+Plain Craft Launcher 2/bin/PCL/
+fr/

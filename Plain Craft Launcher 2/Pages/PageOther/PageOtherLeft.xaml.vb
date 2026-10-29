@@ -131,12 +131,6 @@ Public Class PageOtherLeft
         e.Handled = True
     End Sub
     Public Shared Sub TryFeedback()
-        If False.Equals(PageSetupSystem.IsLauncherNewest) Then
-            If MyMsgBox($"你的 PCL 不是最新版，因此无法提交反馈。{vbCrLf}请在更新后，确认该问题在最新版中依然存在，然后再提交反馈。", "无法提交反馈", "更新", "取消") = 1 Then
-                UpdateCheckByButton()
-            End If
-            Return
-        End If
         Select Case MyMsgBox("在提交新反馈前，建议先搜索反馈列表，以避免重复提交。" & vbCrLf & "如果无法打开该网页，请使用 VPN 改善网络环境。",
                     "反馈", "提交新反馈", "查看反馈列表", "取消")
             Case 1
